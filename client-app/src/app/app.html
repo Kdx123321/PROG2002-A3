@@ -1,0 +1,32 @@
+<!-- ==========================================================================
+     app.html - ROOT LAYOUT (shared by every page)
+     --------------------------------------------------------------------------
+     Segment breakdown (assessment requirement):
+       [1] Header  - site logo + Nav, rendered ONCE here, common to all pages
+       [2] Nav     - primary navigation links (inside the header)
+       [3] Body    - swaps per route through <router-outlet>
+       [4] Footer  - rendered ONCE here, common to all pages
+     ========================================================================== -->
+
+<!-- ============================ [1]+[2] Header & Nav ============================ -->
+<header class="site-nav">
+  <div class="container nav-inner">
+    <a class="logo" routerLink="/">Liuzhou Charity Events</a>
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/search" routerLinkActive="active">Search</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================================ [3] Body ================================== -->
+<main class="container">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- =============================== [4] Footer ================================= -->
+<footer class="site-footer">
+  <div class="container">
+    <p>Liuzhou Charity Events &mdash; connecting volunteers and donors in Liuzhou, Guangxi.</p>
+  </div>
+</footer>
