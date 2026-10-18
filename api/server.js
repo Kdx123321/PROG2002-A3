@@ -39,6 +39,15 @@ const db = require('./event_db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// cPanel Passenger forwards the full path including the app mount
+// prefix (/a3api); strip it so our /api routes match.
+app.use((req, res, next) => {
+    if (req.url.startsWith('/a3api')) {
+        req.url = req.url.slice('/a3api'.length) || '/';
+    }
+    next();
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -52,6 +61,17 @@ app.use((req, res, next) => {
 // In development the Angular dev servers are used instead; in production
 // (SCU cPanel) the Express server hosts the compiled output.
 app.use(express.static(path.join(__dirname, 'public')));
+
+// SPA fallbacks so Angular's router can handle deep links after the
+// built apps are copied into the public folder:
+//   client-app build  -> public/         (deep links like /event/5)
+//   admin-app  build  -> public/admin/   (deep links like /admin/edit/3)
+app.get(/^\/admin\/(?!api\/).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
+});
+app.get(/^\/(?!api\/|admin\/).*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Reusable query fragment: event row + category name + organisation name.
 const EVENT_SELECT = `
@@ -73,6 +93,20 @@ const EVENT_FIELDS = [
 // Fields an event insert/update must always provide.
 const REQUIRED_EVENT_FIELDS = ['organisation_id', 'category_id', 'name',
     'event_date', 'location', 'city', 'ticket_price'];
+
+// Numeric DECIMAL columns: an empty string from a form field is not a
+// valid number, so drop it and let the column DEFAULT apply instead.
+const NUMERIC_EVENT_FIELDS = ['ticket_price', 'fundraising_goal',
+    'funds_raised', 'latitude', 'longitude'];
+
+// Remove empty strings for numeric fields so INSERT/UPDATE fall back
+// to the database column defaults (e.g. ticket_price DEFAULT 0.00).
+function sanitizeEventBody(body) {
+    NUMERIC_EVENT_FIELDS.forEach(f => {
+        if (body[f] === '') delete body[f];
+    });
+    return body;
+}
 
 // -------------------------------------------------------------
 // GET /api/events
@@ -116,7 +150,9 @@ app.get('/api/categories', (req, res) => {
 // -------------------------------------------------------------
 app.get('/api/events/search', (req, res) => {
     // Whitelist the allowed query parameters to avoid SQL injection.
-    const { date, location, category } = req.query;
+    // The Angular client sends "category_id"; accept "category" as an alias.
+    const { date, location } = req.query;
+    const category = req.query.category_id || req.query.category;
     const conditions = [];
     const params = [];
 
@@ -281,7 +317,7 @@ app.get('/api/admin/events/:id', (req, res) => {
 // EVENT_FIELDS are accepted; REQUIRED_EVENT_FIELDS must be present.
 // -------------------------------------------------------------
 app.post('/api/admin/events', (req, res) => {
-    const body = req.body || {};
+    const body = sanitizeEventBody(req.body || {});
 
     const missing = REQUIRED_EVENT_FIELDS.filter(f => body[f] === undefined || body[f] === '');
     if (missing.length) {
@@ -294,7 +330,10 @@ app.post('/api/admin/events', (req, res) => {
         VALUES (${fields.map(() => '?').join(', ')})
     `;
     db.query(sql, fields.map(f => body[f]), (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
+        if (err) {
+            console.error('INSERT event failed:', err.message);
+            return res.status(500).json({ error: 'Database error', details: err.message });
+        }
         res.status(201).json({ event_id: result.insertId, ...body });
     });
 });
@@ -305,7 +344,7 @@ app.post('/api/admin/events', (req, res) => {
 // least one must be supplied). Whitelisted fields only.
 // -------------------------------------------------------------
 app.put('/api/admin/events/:id', (req, res) => {
-    const body = req.body || {};
+    const body = sanitizeEventBody(req.body || {});
     const fields = EVENT_FIELDS.filter(f => body[f] !== undefined);
 
     if (fields.length === 0) {
@@ -317,7 +356,10 @@ app.put('/api/admin/events/:id', (req, res) => {
         WHERE event_id = ?
     `;
     db.query(sql, [...fields.map(f => body[f]), req.params.id], (err, result) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
+        if (err) {
+            console.error('UPDATE event failed:', err.message);
+            return res.status(500).json({ error: 'Database error', details: err.message });
+        }
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Event not found' });
         res.json({ event_id: Number(req.params.id), updated: fields });
     });
