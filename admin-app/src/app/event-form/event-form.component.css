@@ -1,0 +1,6 @@
+
+:host { display: block; }
+.admin-form { background: #fff; border-radius: 12px; padding: 22px; box-shadow: 0 2px 10px rgba(92,26,58,.1); display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin-top: 16px; }
+.admin-form label:has(textarea), .admin-form label:has(input[name="short_description"]), .admin-form label:has(input[name="purpose"]), .admin-form label:has(input[name="image_url"]), .admin-form > div { grid-column: 1 / -1; }
+.admin-form .btn { margin-right: 10px; }
+.registrations { margin-top: 32px; }

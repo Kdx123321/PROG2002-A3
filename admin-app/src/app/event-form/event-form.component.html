@@ -1,0 +1,118 @@
+<!-- ==========================================================================
+     event-form.component.html
+     Admin form page (Body): create/edit event; edit mode shows registrations.
+     ========================================================================== -->
+
+<h2>{{ editId ? 'Edit Event' : 'New Event' }}</h2>
+
+@if (loading()) { <p class="muted">Loading...</p> }
+@if (error()) { <p class="error-banner">{{ error() }}</p> }
+@if (successMsg()) { <p class="success-banner">{{ successMsg() }}</p> }
+
+@if (!loading()) {
+  <form class="admin-form" (ngSubmit)="onSubmit()">
+    <label>Name *
+      <input type="text" name="name" [(ngModel)]="form.name" required>
+    </label>
+
+    <label>Category *
+      <select name="category_id" [(ngModel)]="form.category_id">
+        @for (c of categories(); track c.category_id) {
+          <option [ngValue]="c.category_id">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label>Organisation ID *
+      <input type="number" name="organisation_id" min="1" [(ngModel)]="form.organisation_id" required>
+    </label>
+
+    <label>Date &amp; time *
+      <input type="datetime-local" name="event_date" [(ngModel)]="form.event_date" required>
+    </label>
+
+    <label>Location *
+      <input type="text" name="location" [(ngModel)]="form.location" required>
+    </label>
+
+    <label>City *
+      <input type="text" name="city" [(ngModel)]="form.city" required>
+    </label>
+
+    <label>Ticket price *
+      <input type="number" name="ticket_price" min="0" step="0.01" [(ngModel)]="form.ticket_price" required>
+    </label>
+
+    <label>Short description
+      <input type="text" name="short_description" [(ngModel)]="form.short_description">
+    </label>
+
+    <label>Full description
+      <textarea name="full_description" rows="4" [(ngModel)]="form.full_description"></textarea>
+    </label>
+
+    <label>Purpose
+      <input type="text" name="purpose" [(ngModel)]="form.purpose">
+    </label>
+
+    <label>Ticket info
+      <input type="text" name="ticket_info" [(ngModel)]="form.ticket_info">
+    </label>
+
+    <label>Fundraising goal
+      <input type="number" name="fundraising_goal" min="0" step="0.01" [(ngModel)]="form.fundraising_goal">
+    </label>
+
+    <label>Funds raised
+      <input type="number" name="funds_raised" min="0" step="0.01" [(ngModel)]="form.funds_raised">
+    </label>
+
+    <label>Image path
+      <input type="text" name="image_url" [(ngModel)]="form.image_url" placeholder="images/fun-run.jpg">
+    </label>
+
+    <label>Latitude
+      <input type="number" name="latitude" step="0.0000001" [(ngModel)]="form.latitude">
+    </label>
+
+    <label>Longitude
+      <input type="number" name="longitude" step="0.0000001" [(ngModel)]="form.longitude">
+    </label>
+
+    <label>Status
+      <select name="status" [(ngModel)]="form.status">
+        <option value="active">active</option>
+        <option value="suspended">suspended</option>
+      </select>
+    </label>
+
+    <div>
+      <button class="btn" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving...' : (editId ? 'Save changes' : 'Create event') }}
+      </button>
+      <a class="btn btn-secondary" routerLink="/">Cancel</a>
+    </div>
+  </form>
+
+  @if (editId && registrations().length > 0) {
+    <section class="registrations">
+      <h3>Registrations for this event ({{ registrations().length }})</h3>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Phone</th><th>Registered on</th><th>Tickets</th></tr>
+        </thead>
+        <tbody>
+          @for (r of registrations(); track r.registration_id) {
+            <tr>
+              <td>{{ r.full_name }}</td>
+              <td>{{ r.email }}</td>
+              <td>{{ r.phone ?? '-' }}</td>
+              <td>{{ r.registration_date | date:'medium' }}</td>
+              <td>{{ r.tickets }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+}
