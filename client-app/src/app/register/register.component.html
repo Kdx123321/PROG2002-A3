@@ -1,0 +1,41 @@
+<!-- ==========================================================================
+     register.component.html
+     Registration page (Body): ticket purchase form for one event.
+     ========================================================================== -->
+
+@if (error()) { <p class="error-banner">{{ error() }}</p> }
+@if (notFound()) {
+  <p class="error-banner">Event not found or has been suspended.</p>
+}
+
+@if (event(); as event) {
+  <h2>Register: {{ event.name }}</h2>
+  <p class="muted">{{ event.location }} &middot; {{ event.event_date | date:'medium' }}</p>
+
+  @if (successMsg()) {
+    <p class="success-banner">{{ successMsg() }}</p>
+    <p><a [routerLink]="['/event', event.event_id]">Back to event details</a></p>
+  }
+
+  @if (formError()) { <p class="error-banner">{{ formError() }}</p> }
+
+  <form class="reg-form" (ngSubmit)="onSubmit()">
+    <label>Full name *
+      <input type="text" name="full_name" [(ngModel)]="form.full_name" required>
+    </label>
+    <label>Email *
+      <input type="email" name="email" [(ngModel)]="form.email" required>
+    </label>
+    <label>Phone
+      <input type="text" name="phone" [(ngModel)]="form.phone">
+    </label>
+    <label>Tickets (1&ndash;10) *
+      <input type="number" name="tickets" min="1" max="10" [(ngModel)]="form.tickets" required>
+    </label>
+    <button class="btn" type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Submitting...' : 'Confirm registration' }}
+    </button>
+  </form>
+
+  <p class="muted">One registration per email address per event. You can register for other events with the same email.</p>
+}

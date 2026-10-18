@@ -1,0 +1,67 @@
+<!-- ==========================================================================
+     event-detail.component.html
+     Event detail page (Body): event info, weather forecast, registration list.
+     ========================================================================== -->
+
+@if (error()) {
+  <p class="error-banner">{{ error() }}</p>
+  <p><a routerLink="/">Back to home</a></p>
+}
+
+@if (event(); as event) {
+  <article class="detail">
+    <img class="detail-img" [src]="event.image_url" [alt]="event.name">
+    <div class="detail-body">
+      <h2>{{ event.name }}</h2>
+      <p class="muted">
+        {{ event.location }} &middot; {{ event.event_date | date:'medium' }}
+        &middot; {{ event.category }}
+      </p>
+      <p class="price">{{ event.ticket_price | currency:'USD' }}</p>
+      <p>{{ event.full_description }}</p>
+
+      @if (event.status === 'active') {
+        <a class="btn" [routerLink]="['/register', event.event_id]">Register now</a>
+      } @else {
+        <span class="badge badge-suspended">Registration suspended</span>
+      }
+    </div>
+  </article>
+
+  @if (weatherDays().length > 0) {
+    <section class="weather-strip">
+      <h3>7-day forecast (Open-Meteo)</h3>
+      <div class="weather-days">
+        @for (d of weatherDays(); track d.date) {
+          <div class="weather-day">
+            <p class="weather-date">{{ d.date | date:'EEE, MMM d' }}</p>
+            <p>{{ d.label }}</p>
+            <p class="muted">{{ d.min }}&deg;C &ndash; {{ d.max }}&deg;C</p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="registrations">
+    <h3>Registrations ({{ event.registrations.length }}) &mdash; {{ totalTickets() }} ticket(s) booked</h3>
+    @if (event.registrations.length > 0) {
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Registered on</th><th>Tickets</th></tr>
+        </thead>
+        <tbody>
+          @for (r of event.registrations; track r.registration_id) {
+            <tr>
+              <td>{{ r.full_name }}</td>
+              <td>{{ r.registration_date | date:'medium' }}</td>
+              <td>{{ r.tickets }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="muted">No registrations yet &mdash; be the first!</p>
+    }
+  </section>
+}

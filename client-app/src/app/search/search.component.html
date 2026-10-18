@@ -1,0 +1,47 @@
+<!-- ==========================================================================
+     search.component.html
+     Search page (Body): filter form + results grid.
+     ========================================================================== -->
+
+<h2>Search Events</h2>
+
+<form class="search-form" (ngSubmit)="onSearch()">
+  <div class="form-row">
+    <label>Date
+      <input type="date" name="date" [(ngModel)]="criteria.date">
+    </label>
+    <label>Location
+      <input type="text" name="location" [(ngModel)]="criteria.location" placeholder="e.g. Binjiang Park">
+    </label>
+    <label>Category
+      <select name="category_id" [(ngModel)]="criteria.category_id">
+        <option value="">All categories</option>
+        @for (c of categories(); track c.category_id) {
+          <option [ngValue]="c.category_id">{{ c.name }}</option>
+        }
+      </select>
+    </label>
+    <button class="btn" type="submit" [disabled]="loading()">{{ loading() ? 'Searching...' : 'Search' }}</button>
+  </div>
+</form>
+
+@if (error()) { <p class="error-banner">{{ error() }}</p> }
+
+@if (results() !== null) {
+  <p class="muted">{{ results()!.length }} event(s) found.</p>
+  <div class="card-grid">
+    @for (e of results()!; track e.event_id) {
+      <article class="card">
+        <img [src]="e.image_url" [alt]="e.name">
+        <div class="card-body">
+          <h3>{{ e.name }}</h3>
+          <p class="muted">{{ e.location }} &middot; {{ e.event_date | date:'mediumDate' }}</p>
+          <p class="price">{{ priceNum(e) === 0 ? 'Free' : ('$' + priceNum(e).toFixed(2)) }}</p>
+          <a class="btn btn-small" [routerLink]="['/event', e.event_id]">View details</a>
+        </div>
+      </article>
+    } @empty {
+      <p>No events match your criteria.</p>
+    }
+  </div>
+}

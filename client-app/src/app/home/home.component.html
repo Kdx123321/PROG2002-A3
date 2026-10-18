@@ -1,0 +1,36 @@
+<!-- ==========================================================================
+     home.component.html
+     Home page (Body): hero banner + card grid of all active events.
+     ========================================================================== -->
+
+<section class="hero">
+  <h1>Charity Events in Liuzhou</h1>
+  <p>Find and join local fundraising events &mdash; every ticket helps a good cause.</p>
+  <a class="btn" routerLink="/search">Search events</a>
+</section>
+
+@if (loading()) {
+  <p class="loading">Loading events...</p>
+}
+@if (error()) {
+  <p class="error-banner">{{ error() }}</p>
+}
+
+@if (!loading() && !error()) {
+  <div class="card-grid">
+    @for (e of events(); track e.event_id) {
+      <article class="card">
+        <img [src]="e.image_url" [alt]="e.name">
+        <div class="card-body">
+          <span class="badge" [class.badge-past]="isPast(e)">{{ isPast(e) ? 'Past' : 'Upcoming' }}</span>
+          <h3>{{ e.name }}</h3>
+          <p class="muted">{{ e.location }} &middot; {{ e.event_date | date:'mediumDate' }}</p>
+          <p class="price">{{ priceNum(e) === 0 ? 'Free' : ('$' + priceNum(e).toFixed(2)) }}</p>
+          <a class="btn btn-small" [routerLink]="['/event', e.event_id]">View details</a>
+        </div>
+      </article>
+    } @empty {
+      <p>No events found.</p>
+    }
+  </div>
+}
